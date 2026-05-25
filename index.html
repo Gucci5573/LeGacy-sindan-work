@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お仕事タイプ診断（職業編）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#F29C38; --orange-dark:#E78A22;
+    --yellow:#F5C744; --brown:#4A3C31; --brown-soft:#6B5A4C;
+    --ivory:#FDFBF7; --cream:#FFF9E6; --coral:#E07A5F;
+    --line:#EDE6DA; --white:#FFFFFF;
+    --shadow:0 8px 28px rgba(74,60,49,0.10);
+    --shadow-sm:0 4px 14px rgba(74,60,49,0.08);
+    --radius:18px; --radius-lg:26px;
+    --font-jp:"游ゴシック体","YuGothic","游ゴシック Medium","Yu Gothic Medium","游ゴシック","Yu Gothic",sans-serif;
+    --font-en:"Open Sans","游ゴシック体","YuGothic","Yu Gothic",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:var(--font-en),var(--font-jp);color:var(--brown);
+    background:var(--ivory);line-height:1.9;letter-spacing:0.06em;
+    -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(circle at 12% 10%, rgba(245,199,68,0.16), transparent 42%),
+      radial-gradient(circle at 88% 88%, rgba(242,156,56,0.12), transparent 45%),
+      var(--ivory);
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 18px;min-height:100vh;display:flex;flex-direction:column;}
+
+  .screen{display:none;animation:fadeUp .5s ease both;padding:28px 0 60px;}
+  .screen.active{display:block;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+  .marker{background:linear-gradient(transparent 62%, rgba(245,199,68,0.55) 62%);font-weight:700;padding:0 2px;}
+
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    min-height:62px;padding:16px 24px;background:var(--orange);color:#fff;border:none;
+    border-radius:50px;font-family:var(--font-jp);font-size:17px;font-weight:700;
+    letter-spacing:0.08em;cursor:pointer;box-shadow:0 6px 16px rgba(242,156,56,0.35);
+    transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+  }
+  .btn:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(242,156,56,0.42);background:#F6A94E;}
+  .btn:active{transform:translateY(-1px);}
+  .btn:disabled{background:#E7D9C4;color:#fff;box-shadow:none;cursor:not-allowed;transform:none;}
+  .btn.coral{background:var(--coral);box-shadow:0 6px 16px rgba(224,122,95,0.35);}
+  .btn.coral:hover{background:#E88A72;box-shadow:0 12px 24px rgba(224,122,95,0.42);}
+  .btn.ghost{background:#fff;color:var(--orange);border:2px solid var(--orange);box-shadow:none;}
+  .btn.ghost:hover{background:var(--cream);}
+  .btn.green{background:#06C755;box-shadow:0 6px 16px rgba(6,199,85,0.30);}
+  .btn.green:hover{background:#1ED15F;box-shadow:0 12px 24px rgba(6,199,85,0.38);}
+  .btn-back{background:none;border:none;color:var(--brown-soft);font-family:var(--font-jp);font-size:14px;cursor:pointer;padding:10px 4px;letter-spacing:0.06em;}
+  .btn-back:hover{color:var(--orange);}
+
+  /* 導入 */
+  .hero{text-align:center;padding-top:30px;}
+  .hero h1{font-family:var(--font-jp);font-weight:700;font-size:30px;line-height:1.5;color:var(--brown);margin-bottom:14px;letter-spacing:0.04em;}
+  .hero h1 .sub{display:block;font-size:18px;color:var(--orange-dark);margin-top:6px;}
+  .hero p.lead{font-family:var(--font-jp);font-size:15.5px;color:var(--brown-soft);margin:0 auto 8px;max-width:430px;}
+  .card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:30px 24px;margin-top:26px;border:1px solid var(--line);}
+  .card-title{font-family:var(--font-jp);font-size:17px;font-weight:700;color:var(--brown);display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .card-note{font-family:var(--font-jp);font-size:13px;color:var(--brown-soft);margin-bottom:22px;}
+  .field{margin-bottom:22px;}
+  .field > label{display:block;font-family:var(--font-jp);font-size:14.5px;font-weight:700;color:var(--brown);margin-bottom:10px;letter-spacing:0.04em;}
+  .field .req{color:var(--coral);font-size:12px;margin-left:6px;font-weight:700;}
+  .field .multi-note{color:var(--orange-dark);font-size:11.5px;margin-left:6px;font-weight:700;}
+  .opts{display:flex;flex-wrap:wrap;gap:8px;}
+  .opt{font-family:var(--font-jp);font-size:14px;color:var(--brown);background:var(--ivory);border:1.5px solid var(--line);border-radius:50px;padding:11px 16px;cursor:pointer;transition:all .15s ease;user-select:none;min-height:44px;display:flex;align-items:center;gap:6px;}
+  .opt:hover{border-color:var(--orange);background:var(--cream);}
+  .opt.sel{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700;box-shadow:0 4px 10px rgba(242,156,56,0.3);}
+  .opt .chk{display:none;}
+  .opt.sel .chk{display:inline;}
+  .row3{display:flex;gap:8px;}
+  .row3 .selbox{flex:1;}
+  select{width:100%;font-family:var(--font-jp);font-size:14.5px;color:var(--brown);padding:13px 12px;border:1.5px solid var(--line);border-radius:14px;background:var(--ivory) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%23F29C38' stroke-width='2' fill='none' stroke-linecap='round'/></svg>") no-repeat right 14px center;-webkit-appearance:none;appearance:none;cursor:pointer;min-height:48px;}
+  select:focus{outline:none;border-color:var(--orange);}
+
+  /* 質問 */
+  .progress-wrap{padding:20px 0 8px;position:sticky;top:0;background:linear-gradient(var(--ivory) 75%,transparent);z-index:10;}
+  .progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+  .progress-label{font-family:var(--font-jp);font-size:13px;color:var(--brown-soft);font-weight:700;}
+  .progress-count{font-family:var(--font-en);font-weight:700;color:var(--orange-dark);font-size:15px;}
+  .progress-count b{font-size:22px;}
+  .progress-bar{height:12px;background:#fff;border-radius:50px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(74,60,49,0.08);border:1px solid var(--line);}
+  .progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--yellow),var(--orange));border-radius:50px;transition:width .45s cubic-bezier(.4,1.3,.5,1);}
+  .cheer{text-align:center;font-family:var(--font-jp);font-size:13.5px;color:var(--orange-dark);font-weight:700;margin-top:12px;min-height:20px;animation:fadeUp .4s ease both;}
+
+  .q-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:34px 24px 30px;margin-top:14px;border:1px solid var(--line);animation:fadeUp .4s ease both;}
+  .q-num{display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-en);font-weight:700;font-size:14px;color:#fff;background:var(--orange);width:38px;height:38px;border-radius:50%;margin-bottom:18px;box-shadow:0 4px 10px rgba(242,156,56,0.3);}
+  .q-text{font-family:var(--font-jp);font-size:20px;font-weight:700;line-height:1.7;color:var(--brown);margin-bottom:26px;letter-spacing:0.03em;min-height:68px;}
+  .answers{display:flex;flex-direction:column;gap:11px;}
+  .ans{display:flex;align-items:center;gap:13px;width:100%;font-family:var(--font-jp);font-size:15.5px;font-weight:500;color:var(--brown);background:var(--ivory);border:2px solid var(--line);border-radius:16px;padding:15px 18px;cursor:pointer;transition:all .15s ease;text-align:left;min-height:58px;}
+  .ans:hover{border-color:var(--orange);background:var(--cream);transform:translateX(3px);}
+  .ans.sel{border-color:var(--orange);background:var(--cream);box-shadow:0 4px 12px rgba(242,156,56,0.18);}
+  .ans .dot{width:22px;height:22px;border-radius:50%;border:2.5px solid var(--line);flex-shrink:0;transition:all .15s ease;position:relative;}
+  .ans:hover .dot{border-color:var(--orange);}
+  .ans.sel .dot{border-color:var(--orange);background:var(--orange);}
+  .ans.sel .dot::after{content:"";position:absolute;inset:4px;background:#fff;border-radius:50%;}
+  .q-foot{margin-top:24px;display:flex;align-items:center;justify-content:space-between;}
+
+  /* 結果 */
+  .result-hero{text-align:center;padding-top:10px;}
+  .result-hero .ribbon{display:inline-block;font-family:var(--font-jp);font-size:14px;font-weight:700;color:var(--orange-dark);background:var(--cream);padding:8px 22px;border-radius:50px;margin-bottom:16px;border:1.5px solid rgba(242,156,56,0.3);letter-spacing:0.08em;}
+  .result-hero .main-emoji{font-size:60px;line-height:1;margin-bottom:10px;animation:pop .6s ease both;}
+  @keyframes pop{0%{transform:scale(0);}70%{transform:scale(1.15);}100%{transform:scale(1);}}
+  .result-hero .lead-small{font-family:var(--font-jp);font-size:15px;color:var(--brown-soft);margin-bottom:8px;}
+  .result-hero h2{font-family:var(--font-jp);font-weight:700;font-size:27px;line-height:1.5;color:var(--brown);margin-bottom:6px;letter-spacing:0.03em;}
+  .result-hero h2 .type-name{color:var(--orange-dark);}
+  .result-hero .type-tag{display:inline-block;font-family:var(--font-jp);font-size:15px;font-weight:700;color:#fff;background:var(--orange);padding:6px 20px;border-radius:50px;margin-top:6px;}
+  .multi-banner{background:var(--cream);border:1.5px dashed var(--orange);border-radius:var(--radius);padding:18px 20px;margin-top:24px;font-family:var(--font-jp);font-size:14.5px;color:var(--brown);line-height:1.85;}
+  .multi-banner b{color:var(--orange-dark);}
+  .detail-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:28px 24px;margin-top:26px;border:1px solid var(--line);}
+  .detail-block{padding:18px 0;border-bottom:1px dashed var(--line);}
+  .detail-block:last-child{border-bottom:none;padding-bottom:2px;}
+  .detail-block:first-child{padding-top:2px;}
+  .detail-block .dh{font-family:var(--font-jp);font-size:16px;font-weight:700;color:var(--brown);display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .detail-block .dt{font-family:var(--font-jp);font-size:15px;color:var(--brown-soft);line-height:2.0;}
+  .detail-block .dt p{margin-bottom:10px;}
+  .detail-block .dt p:last-child{margin-bottom:0;}
+  .detail-block .dt ul{list-style:none;margin:6px 0 4px;}
+  .detail-block .dt li{position:relative;padding-left:26px;margin-bottom:9px;}
+  .detail-block .dt li::before{content:"✦";color:var(--orange);position:absolute;left:0;top:0;font-size:14px;}
+  .detail-block.msg{background:var(--cream);border-radius:16px;padding:22px;border-bottom:none;margin-top:8px;}
+  .detail-block.msg .dt{color:var(--brown);}
+
+  .section-head{text-align:center;margin:44px 0 4px;}
+  .section-head h3{font-family:var(--font-jp);font-size:21px;font-weight:700;color:var(--brown);letter-spacing:0.03em;}
+  .section-head p{font-family:var(--font-jp);font-size:14px;color:var(--brown-soft);margin-top:6px;}
+  .type-list{display:flex;flex-direction:column;gap:14px;margin-top:22px;}
+  .type-mini{display:flex;align-items:flex-start;gap:14px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:18px;border:1px solid var(--line);transition:transform .15s ease;}
+  .type-mini:hover{transform:translateY(-2px);}
+  .type-mini.is-top{border:2px solid var(--orange);background:var(--cream);}
+  .type-mini .emoji{font-size:32px;line-height:1;flex-shrink:0;margin-top:2px;}
+  .type-mini .tm-body{flex:1;}
+  .type-mini .tm-name{font-family:var(--font-jp);font-size:15.5px;font-weight:700;color:var(--brown);margin-bottom:4px;}
+  .type-mini .tm-name .pct{font-family:var(--font-en);font-size:13px;color:var(--orange-dark);font-weight:700;margin-left:6px;}
+  .type-mini .tm-desc{font-family:var(--font-jp);font-size:13.5px;color:var(--brown-soft);line-height:1.8;}
+  .type-mini .tm-flag{display:inline-block;font-family:var(--font-jp);font-size:11px;font-weight:700;color:#fff;background:var(--orange);padding:2px 10px;border-radius:50px;margin-bottom:6px;letter-spacing:0.05em;}
+
+  .closing{background:var(--cream);border-radius:var(--radius-lg);padding:30px 24px;margin-top:40px;text-align:center;border:1px solid rgba(242,156,56,0.2);}
+  .closing .heart{font-size:36px;margin-bottom:10px;}
+  .closing p{font-family:var(--font-jp);font-size:15.5px;color:var(--brown);line-height:1.95;margin-bottom:16px;}
+  .closing p:last-child{margin-bottom:0;}
+  .closing p .marker{font-size:16px;}
+
+  .cta-area{margin-top:34px;display:flex;flex-direction:column;gap:14px;}
+  .cta-lead{font-family:var(--font-jp);font-size:14px;color:var(--brown-soft);text-align:center;margin-bottom:2px;}
+  .cta-mini{font-family:var(--font-jp);font-size:12px;color:var(--brown-soft);text-align:center;margin-top:2px;}
+
+  /* シェア */
+  .share-box{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:26px 22px;margin-top:40px;border:1px solid var(--line);text-align:center;}
+  .share-box h4{font-family:var(--font-jp);font-size:17px;font-weight:700;color:var(--brown);margin-bottom:6px;}
+  .share-box p{font-family:var(--font-jp);font-size:13px;color:var(--brown-soft);margin-bottom:18px;}
+  .share-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .share-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:88px;min-height:80px;border:1.5px solid var(--line);border-radius:16px;background:var(--ivory);cursor:pointer;font-family:var(--font-jp);font-size:12px;font-weight:700;color:var(--brown);transition:all .15s ease;}
+  .share-btn:hover{transform:translateY(-3px);border-color:var(--orange);background:var(--cream);}
+  .share-btn .si{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;}
+  .share-btn .si.x{background:#000;}
+  .share-btn .si.line{background:#06C755;}
+  .share-btn .si.copy{background:var(--orange);}
+  .share-btn svg{width:17px;height:17px;fill:#fff;}
+  .copy-toast{font-family:var(--font-jp);font-size:13px;color:var(--orange-dark);font-weight:700;margin-top:14px;height:18px;opacity:0;transition:opacity .3s ease;}
+  .copy-toast.show{opacity:1;}
+
+  /* もう一度（強調） */
+  .restart-wrap{margin-top:34px;text-align:center;}
+  .restart-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-jp);font-size:15px;font-weight:700;color:var(--orange-dark);background:#fff;border:2px solid var(--orange);border-radius:50px;padding:14px 32px;cursor:pointer;box-shadow:0 4px 12px rgba(242,156,56,0.18);transition:all .18s ease;min-height:56px;}
+  .restart-btn:hover{background:var(--cream);transform:translateY(-2px);box-shadow:0 8px 18px rgba(242,156,56,0.28);}
+
+  /* LINE追加画面 */
+  .line-hero{text-align:center;padding-top:24px;}
+  .line-hero .line-emoji{font-size:54px;line-height:1;margin-bottom:8px;}
+  .line-hero h2{font-family:var(--font-jp);font-size:25px;font-weight:700;color:var(--brown);line-height:1.5;margin-bottom:10px;}
+  .line-hero h2 .accent{color:#06C755;}
+  .line-hero p.lead{font-family:var(--font-jp);font-size:15px;color:var(--brown-soft);max-width:420px;margin:0 auto;}
+  .qr-card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:30px 24px;margin-top:26px;border:1px solid var(--line);text-align:center;}
+  .qr-frame{width:200px;height:200px;margin:0 auto 18px;border:2px dashed var(--line);border-radius:18px;display:flex;align-items:center;justify-content:center;background:var(--ivory);overflow:hidden;}
+  .qr-frame img{width:100%;height:100%;object-fit:contain;}
+  .qr-frame .ph{font-family:var(--font-jp);font-size:12.5px;color:#B7AC9D;line-height:1.7;padding:14px;}
+  .qr-card .qr-note{font-family:var(--font-jp);font-size:13px;color:var(--brown-soft);margin-bottom:20px;}
+  .merit-card{background:var(--cream);border-radius:var(--radius-lg);padding:26px 24px;margin-top:24px;border:1px solid rgba(242,156,56,0.2);}
+  .merit-card h4{font-family:var(--font-jp);font-size:16px;font-weight:700;color:var(--brown);margin-bottom:16px;text-align:center;}
+  .merit-list{list-style:none;}
+  .merit-list li{position:relative;padding-left:30px;margin-bottom:14px;font-family:var(--font-jp);font-size:14.5px;color:var(--brown);line-height:1.8;}
+  .merit-list li:last-child{margin-bottom:0;}
+  .merit-list li::before{content:"❀";color:var(--orange);position:absolute;left:0;top:1px;}
+
+  footer{text-align:center;padding:30px 0 22px;font-family:var(--font-jp);font-size:11.5px;color:#B7AC9D;}
+
+  @media(min-width:600px){
+    .hero h1{font-size:32px;}
+    .q-text{font-size:21px;}
+    .btn{width:78%;margin-left:auto;margin-right:auto;}
+    .cta-area .btn{width:78%;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== 画面1：導入 ===== -->
+  <section class="screen active" id="screen-intro">
+    <div class="hero">
+      <h1>お仕事タイプ診断<span class="sub">〜 あなたが輝くお仕事、見つけよう ♪ 〜</span></h1>
+      <p class="lead">13個の質問に答えると、5つのお仕事の中から「あなたが特に輝けるタイプ」が見つかります。深く考えこまず、いまの気持ちにいちばん近いものを選んでみてくださいね＾＾</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✎ はじめに、あなたのことを教えてください</div>
+      <div class="card-note">※ すべて選ぶだけでOK。診断の参考にさせていただきます。</div>
+
+      <div class="field">
+        <label>お名前（ニックネームでもOK）<span class="req">必須</span></label>
+        <input type="text" id="name-free" placeholder="お名前を入力してください ♪" style="width:100%;font-family:var(--font-jp);font-size:14.5px;color:var(--brown);padding:13px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--ivory);min-height:48px;">
+      </div>
+
+      <div class="field">
+        <label>生年月日<span class="req">必須</span></label>
+        <div class="row3">
+          <div class="selbox"><select id="birth-y"></select></div>
+          <div class="selbox"><select id="birth-m"></select></div>
+          <div class="selbox"><select id="birth-d"></select></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>性別<span class="req">必須</span></label>
+        <div class="opts" id="opt-gender"></div>
+      </div>
+
+      <div class="field">
+        <label>今のお仕事<span class="req">必須</span></label>
+        <div class="opts" id="opt-job"></div>
+      </div>
+
+      <div class="field" style="margin-bottom:8px;">
+        <label>今やっている副業<span class="req">必須</span><span class="multi-note">複数えらべます</span></label>
+        <div class="opts" id="opt-side"></div>
+        <input type="text" id="side-other" placeholder="差し支えなければ、どんな副業か教えてください ♪" style="display:none;width:100%;margin-top:10px;font-family:var(--font-jp);font-size:14.5px;color:var(--brown);padding:13px 14px;border:1.5px solid var(--line);border-radius:14px;background:var(--ivory);min-height:48px;">
+      </div>
+    </div>
+
+    <div style="margin-top:26px;">
+      <button class="btn" id="start-btn">診断をはじめる ✶</button>
+      <p class="cta-mini" id="intro-hint" style="margin-top:12px;">※ すべての項目を選ぶと、はじめられます</p>
+    </div>
+  </section>
+
+  <!-- ===== 画面2：質問 ===== -->
+  <section class="screen" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span class="progress-label">❁ あなたのタイプ、診断中…</span>
+        <span class="progress-count"><b id="q-current">1</b> / 13</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="cheer" id="cheer"></div>
+    </div>
+
+    <div class="q-card" id="q-card">
+      <span class="q-num" id="q-num">Q1</span>
+      <div class="q-text" id="q-text"></div>
+      <div class="answers" id="answers"></div>
+      <div class="q-foot">
+        <button class="btn-back" id="q-back">← 前にもどる</button>
+        <span style="font-family:var(--font-jp);font-size:12px;color:#B7AC9D;">タップで回答 ♪</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 画面3：結果 ===== -->
+  <section class="screen" id="screen-result">
+    <div class="result-hero">
+      <span class="ribbon">✦ 診断おつかれさまでした！</span>
+      <div class="main-emoji" id="r-emoji">✶</div>
+      <p class="lead-small" id="r-name-lead">あなたに特におすすめは…</p>
+      <h2 id="r-title"></h2>
+      <span class="type-tag" id="r-tag"></span>
+    </div>
+
+    <div id="multi-banner-area"></div>
+    <div class="detail-card" id="r-detail"></div>
+
+    <div class="section-head">
+      <h3>✿ こんな選択肢もあります</h3>
+      <p>どのお仕事にも、あなたらしさが活きるヒントがあります ♪</p>
+    </div>
+    <div class="type-list" id="r-others"></div>
+
+    <div class="closing">
+      <div class="heart">❤</div>
+      <p>最終的にどれを選ぶかは、<br><span class="marker">あなたの"やってみたい"</span>がいちばん大切。</p>
+      <p>診断は、あなたの魅力を映す鏡のようなもの。<br>ピンときた道から、<br>気軽に一歩を踏み出してみてくださいね＾＾</p>
+    </div>
+
+    <div class="cta-area">
+      <p class="cta-lead">もっと詳しく知りたくなったら…</p>
+      <button class="btn ghost" id="cta-intro">❐ 事業紹介ページを見てみる</button>
+      <button class="btn coral" id="cta-line">✉ 無料Zoom面談に申し込む（公式LINE）</button>
+      <p class="cta-mini">※ 勧誘や無理なお誘いはしません。あなたのペースで大丈夫です ♪</p>
+    </div>
+
+    <!-- シェア -->
+    <div class="share-box">
+      <h4>✜ 診断結果をシェアする</h4>
+      <p>よかったら、お友達にも教えてあげてくださいね ♪</p>
+      <div class="share-btns">
+        <button class="share-btn" id="share-x">
+          <span class="si x"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></span>
+          Xでシェア
+        </button>
+        <button class="share-btn" id="share-line">
+          <span class="si line"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 5.64 2 10.12c0 4.01 3.55 7.37 8.35 8.01.32.07.77.21.88.49.1.25.07.65.03.91l-.14.85c-.04.25-.2.99.87.54 1.07-.45 5.76-3.39 7.86-5.81C21.34 13.49 22 11.9 22 10.12 22 5.64 17.52 2 12 2z"/></svg></span>
+          LINEでシェア
+        </button>
+        <button class="share-btn" id="share-copy">
+          <span class="si copy"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1zm3 4H8a2 2 0 00-2 2v14a2 2 0 002 2h11a2 2 0 002-2V7a2 2 0 00-2-2zm0 16H8V7h11v14z"/></svg></span>
+          URLコピー
+        </button>
+      </div>
+      <div class="copy-toast" id="copy-toast">URLをコピーしました ♪</div>
+    </div>
+
+    <div class="restart-wrap">
+      <button class="restart-btn" id="restart-btn">↺ もう一度、診断してみる</button>
+    </div>
+  </section>
+
+  <!-- ===== 画面4：公式LINE追加 ===== -->
+  <section class="screen" id="screen-line">
+    <div style="padding-top:18px;"><button class="btn-back" id="line-back">← 結果にもどる</button></div>
+    <div class="line-hero">
+      <div class="line-emoji">✉</div>
+      <h2>無料Zoom面談は<br><span class="accent">公式LINE</span>からご案内します</h2>
+      <p class="lead">下のQRコード、または友だち追加ボタンから、<br>あやのの公式LINEを追加してくださいね。<br>追加後、メッセージで「面談希望」と<br>送っていただくだけでOKです＾＾</p>
+    </div>
+
+    <div class="qr-card">
+      <div class="qr-frame" id="qr-frame">
+        <div class="ph">ここにQRコードが<br>表示されます<br>（あとで設定できます）</div>
+      </div>
+      <p class="qr-note">スマホで見ている方は、下のボタンが便利です ♪</p>
+      <button class="btn green" id="line-add">＋ 友だち追加する</button>
+    </div>
+
+    <div class="merit-card">
+      <h4>❦ 追加するとこんないいことが</h4>
+      <ul class="merit-list">
+        <li>無料Zoom面談で、診断結果をもとに「あなたに合うお仕事」を一緒に整理できます</li>
+        <li>在宅ワーク・副業のリアルな話や、最初の一歩の踏み出し方が聞けます</li>
+        <li>あやののブログや、お役立ち情報をいちばんに受け取れます</li>
+      </ul>
+    </div>
+
+    <div class="cta-mini" style="margin-top:22px;">※ 無理な勧誘はいたしません。合わなければブロックも自由です。安心してくださいね ♪</div>
+  </section>
+
+
+</div>
+<script>
+/* ===== 設定（URLはあとで差し替え） ===== */
+var CONFIG = {
+  introUrl: "https://ayano1.com/kouzagaiyou/",  // 事業紹介ページ
+  lineUrl:  "https://lin.ee/rUzgnTk",            // 公式LINE 友だち追加リンク
+  lineQrImg: "",          // 公式LINE QR画像URL（空なら枠のみ表示）
+  shareUrl: location.href // シェアするURL（この診断のURL）
+};
+
+/* ===== 導入の選択肢 ===== */
+var INTRO_OPTS = {
+  gender: ["女性","男性","その他"],
+  job: ["会社員","パート・アルバイト","専業主婦・主夫","自営業・フリーランス","公務員","学生","求職中","その他"],
+  side: ["まだ副業はしていない","物販・せどり","ポイ活","ハンドメイド販売","ブログ・アフィリエイト","SNS運用・発信","スキル販売（ココナラ等）","Webライティング","動画編集","デザイン・イラスト","ハンドメイド以外の制作・販売","データ入力・事務代行","オンライン秘書・アシスタント","コーチング・カウンセリング","講師・レッスン","投資（株・FX等）","暗号資産","不動産","アンケート・モニター","フリマアプリ","その他"]
+};
+
+/* ===== 13問（職業名は出さない） ===== */
+var QUESTIONS = [
+  "誰かが悩んでいるとき、答えを教えるより、その人の気持ちに寄りそって一緒に考えたい。",
+  "お店やネットで物を見ると、つい「これいくらで売れるかな」と考えてしまう。",
+  "細かい事務作業を、正確にきちんとこなすのが好きだ。",
+  "派手に稼ぐより、コツコツ確実に積み上がっていくほうが安心する。",
+  "自分のこれまでの経験や知識は、そのまま誰かの役に立てられると思う。",
+  "思い立ったら、あれこれ考えるより、すぐに行動するほうだ。",
+  "相手が自分の力で前に進めるようになる瞬間に、いちばんやりがいを感じる。",
+  "結果が自分に返ってくる、自分の判断で動ける働き方がしたい。",
+  "困っている人を見ると、つい具体的な解決策を考えてしまうタイプだ。",
+  "自分が主役で目立つより、誰かを支える役回りのほうが落ち着く。",
+  "いつも新しい刺激や変化があるほうが、ワクワクして力が出る。",
+  "人の話を、最後までじっくり聴くのが得意なほうだ。",
+  "人に任せるより、自分が関わって全体を動かすほうが性に合っている。"
+];
+
+/* ===== 各質問の応援メッセージ（離脱防止） ===== */
+var CHEERS = [
+  "さあ、スタートです！リラックスしていきましょう ♪",
+  "いい調子です！直感を大切にね＾＾",
+  "順調、順調 ♪ その調子で進めましょう",
+  "もう4問目！あなたらしさが見えてきました❁",
+  "折り返しが近づいてきましたよ ♪",
+  "ここまでおつかれさま！半分ちかくまで来ました✧",
+  "後半戦スタート！もうひと息です＾＾",
+  "あなたの魅力がどんどん見えてきています ♪",
+  "残りもわずか！その調子です✿",
+  "ゴールが見えてきました！あとちょっと ♪",
+  "ラスト3問！最後まで楽しんでいきましょう✧",
+  "あと2問！もうすぐ結果が見られますよ＾＾",
+  "ラスト1問！おつかれさまでした、もう少しです ♪"
+];
+
+var ANSWER_OPTIONS = [
+  {label:"とてもそう思う", value:4},
+  {label:"そう思う",       value:3},
+  {label:"どちらでもない", value:2},
+  {label:"あまり思わない", value:1},
+  {label:"思わない",       value:0}
+];
+
+/* ===== 採点（PDF Ver.2）＋均等化係数 ===== */
+var TYPES = ["hanbai","business","coaching","secretary","poikatsu"]; // 同点優先順位
+var MAXSCORE = {coaching:12, business:12, secretary:11, hanbai:11, poikatsu:7};
+// 5タイプが均等に出やすくなるよう微調整した補正係数（割合に乗算）
+var BALANCE = {hanbai:1.0003, business:1.0100, coaching:1.0252, secretary:1.0099, poikatsu:0.9547};
+
+var TYPE_META = {
+  coaching:{ emoji:"♡", job:"コーチング", type:"伴走サポートタイプ" },
+  business:{ emoji:"♢", job:"事業支援",   type:"課題解決タイプ" },
+  secretary:{emoji:"♧", job:"オンライン秘書", type:"縁の下サポートタイプ" },
+  hanbai:{   emoji:"♤", job:"物販",       type:"堅実プレイヤータイプ" },
+  poikatsu:{ emoji:"❀", job:"ポイ活",     type:"コツコツ積み上げタイプ" }
+};
+
+/* ===== 5タイプの結果文 =====
+   {NAME} は回答者の名前に置換される。
+   konna/miryoku/tsuyomi/chui/msg は HTML文字列（<p>や<ul>使用可）。 */
+var RESULT_TEXT = {
+  coaching:{
+    short:"相手の中にある答えを、そっと一緒に探していける人。",
+    konna:
+      "<p>{NAME}さんは、誰かが立ち止まっているとき、答えを先に言ってしまうのではなく「あなたはどうしたい？」と、まず相手の気持ちにそっと耳を傾けられる人です。</p>"+
+      "<p>相手をコントロールしようとせず、その人が自分の力で答えにたどり着く時間を、何より大切にできる人です。一緒に悩み、一緒に喜べる、そんな温かい伴走者の素質を持っています。話を最後までさえぎらずに聴ける落ち着きも、{NAME}さんならではの強みです＾＾</p>",
+    miryoku:
+      "<p>{NAME}さんのいちばんの魅力は、まわりの人が思わず本音をこぼしたくなる<span class='marker'>安心感</span>です。</p>"+
+      "<ul><li>「この人になら話せる」と感じてもらえる、包みこむような聴く力</li>"+
+      "<li>相手が一歩を踏み出した瞬間を、自分のことのように喜べる純粋さ</li>"+
+      "<li>答えを押しつけず、相手のペースを尊重できる落ち着き</li></ul>",
+    tsuyomi:
+      "<p>その聴く力と問いかける力は、人の成長に寄りそう<b>コーチングのお仕事</b>でいちばん輝きます。{NAME}さんが向き合った相手は、きっと「自分の答え」を見つけて前に進んでいけるはずです。</p>"+
+      "<p>一対一でじっくり関われる場面ほど、{NAME}さんらしさが光ります。まずは身近な人の話をじっくり聴くことから、その力を育てていけますよ ♪</p>",
+    chui:
+      "<p>{NAME}さんは相手を思うあまり、つい自分のことを後回しにしてしまいがち。誰かを支える優しさがあるからこそ、ときどきは<span class='marker'>自分の気持ち</span>にも同じ優しさを向けてあげてくださいね。</p>"+
+      "<p>「聴く」と「自分の意見を伝える」のバランスを少し意識すると、もっと自由に伴走できるようになりますよ＾＾</p>",
+    msg:"{NAME}さんがそばにいると、きっと多くの人が「自分の答え」を見つけられます。その優しさは、ちゃんと立派なお仕事になりますよ。{NAME}さんのペースで、一歩ずつ進んでいきましょうね ♪"
+  },
+
+  business:{
+    short:"困っている人に、具体的な解決の道すじを示してあげられる人。",
+    konna:
+      "<p>{NAME}さんは、困っている人を見ると「こうしたら解決できるかも」と、つい具体的な策が浮かんでくる人です。ただ共感するだけでなく、相手が前に進むための道すじを一緒に描いてあげられる頼もしさがあります。</p>"+
+      "<p>これまでの経験や知識を「自分のためだけ」にとどめず、誰かの役に立てたいという気持ちが自然とわいてくる。全体を見渡して、うまく回していく視点を持っているのも{NAME}さんの特徴です＾＾</p>",
+    miryoku:
+      "<p>{NAME}さんの魅力は、もつれた状況を<span class='marker'>すっきり整理する力</span>と、それを実際に動かしていく実行力です。</p>"+
+      "<ul><li>課題の本質をつかんで、具体策に落としこめる頭の回転</li>"+
+      "<li>「道が見えた！」と相手をホッとさせる、頼れる存在感</li>"+
+      "<li>自分が関わって、全体を前に進めていける主導力</li></ul>",
+    tsuyomi:
+      "<p>その課題解決力と経験は、人の事業や挑戦を支える<b>事業支援のお仕事</b>でぐっと活きます。相談に乗り、仕組みを一緒に整え、相手の背中を押していく役回りが{NAME}さんにはぴったりです。</p>"+
+      "<p>まずは身近な人の「困った」を一緒に解決するところから、その力は磨かれていきますよ ♪</p>",
+    chui:
+      "<p>{NAME}さんは頼りになるぶん、つい全部を背負いこんでしまいがち。相手のためを思って先回りしすぎると、相手が自分で考える機会を奪ってしまうことも。</p>"+
+      "<p>ときには<span class='marker'>相手のペースに任せる余白</span>を残してあげると、{NAME}さんも相手も、もっと楽に前に進めますよ＾＾</p>",
+    msg:"{NAME}さんの経験は、誰かにとっての本物の宝物です。それを分かち合えるお仕事は、ちゃんと世の中にありますよ。抱えすぎず、{NAME}さんらしいペースで進んでいきましょうね ♪"
+  },
+
+  secretary:{
+    short:"誰かを陰でしっかり支える、縁の下の力持ち。",
+    konna:
+      "<p>{NAME}さんは、細かい段取りや事務作業を正確にこなすのが得意で、自分が主役になるより「誰かを支える役回り」のほうが心地よく感じる人です。</p>"+
+      "<p>派手さはなくても、まわりが安心して動けるように土台を整えてあげられる。気がきいて、丁寧で、ミスのない仕事ぶり。そんな{NAME}さんの存在は、組織やチームにとってかけがえのないものです＾＾</p>",
+    miryoku:
+      "<p>{NAME}さんの魅力は、<span class='marker'>「あなたがいてくれて助かる」</span>と心から頼りにされる、確かな安心感です。</p>"+
+      "<ul><li>抜けもれなく、正確に物事を進められる丁寧さ</li>"+
+      "<li>目立たなくても、確実に成果につながる縁の下の力</li>"+
+      "<li>相手の立場に立って先回りできる、こまやかな気づかい</li></ul>",
+    tsuyomi:
+      "<p>その正確さと支える気持ちは、<b>オンライン秘書のお仕事</b>でいちばん輝きます。在宅で、誰かの右腕としてスケジュールやタスクを整え、相手が本来の仕事に集中できる環境をつくる。{NAME}さんにぴったりの働き方です。</p>"+
+      "<p>得意な事務スキルを、少しずつ仕事として育てていけますよ ♪</p>",
+    chui:
+      "<p>{NAME}さんは頼まれると断れず、気づけば抱えこんでしまう一面があるかもしれません。支える優しさがあるからこそ、<span class='marker'>「ここまではOK」の線</span>を自分の中に持っておくことが大切です。</p>"+
+      "<p>無理なく続けられる範囲を知っておくと、もっとのびのびと力を発揮できますよ＾＾</p>",
+    msg:"縁の下で支える{NAME}さんの力は、本当に貴重です。その丁寧さと気づかいを必要としている人が、きっとどこかで待っています。{NAME}さんらしい支え方で、活躍していけますよ ♪"
+  },
+
+  hanbai:{
+    short:"自分の判断で動いて、結果を自分の手で積み上げたい人。",
+    konna:
+      "<p>{NAME}さんは、お店やネットで物を見ると「これいくらで売れるかな」とつい考えてしまう、損得感覚のするどい人です。そして何より、自分の判断で仕入れて売って、その結果が自分に返ってくる働き方にワクワクするタイプ。</p>"+
+      "<p>人に指示されるより、自分で決めて動きたい。努力がそのまま数字や成果になる手応えに、いちばんやりがいを感じられる。そんな自立心と行動力が{NAME}さんの魅力です＾＾</p>",
+    miryoku:
+      "<p>{NAME}さんの魅力は、<span class='marker'>相場をつかむ感覚</span>と、自分で決めて動ける自立心です。</p>"+
+      "<ul><li>「これは売れる」を直感的に見抜く、損得のセンス</li>"+
+      "<li>人任せにせず、自分の判断で前に進める行動力</li>"+
+      "<li>コツコツ着実に積み上げていける、地に足のついた堅実さ</li></ul>",
+    tsuyomi:
+      "<p>その目利きと行動力は、<b>物販のお仕事</b>でしっかり活きます。自分のペースで、努力がそのまま成果につながる働き方は、{NAME}さんの「自分でやりたい」という気持ちにぴったりです。</p>"+
+      "<p>小さくテストしながら、勝ちパターンを自分の手で育てていけますよ ♪</p>",
+    chui:
+      "<p>{NAME}さんは勢いよく動けるぶん、ときに数字の確認があとまわしになりがち。せっかくの行動力を活かすためにも、ときどき立ち止まって<span class='marker'>仕入れと利益のバランス</span>を見直すと、もっと安定して伸ばせます。</p>"+
+      "<p>{NAME}さんなら、コツコツ続ける堅実さもちゃんと持っているので大丈夫ですよ＾＾</p>",
+    msg:"「自分の力で結果を出す」、その手応えをいちばん楽しめるのが{NAME}さんです。あせらず、一歩ずつ確実に育てていきましょうね。{NAME}さんの行動力なら、きっと前に進めますよ ♪"
+  },
+
+  poikatsu:{
+    short:"派手さより、コツコツ確実な積み上げに安心できる人。",
+    konna:
+      "<p>{NAME}さんは、一気に大きく稼ぐより「コツコツ確実に積み上がっていく」ほうに安心を感じる、堅実で地に足のついた人です。小さな積み重ねを面倒がらず、むしろ楽しめるまじめさを持っています。</p>"+
+      "<p>リスクの大きい挑戦に飛びつくより、無理のない範囲で着実に。そんな{NAME}さんの安定志向は、長く続けるうえでとても大きな強みになります＾＾</p>",
+    miryoku:
+      "<p>{NAME}さんの魅力は、<span class='marker'>無理せず続けられる堅実さ</span>です。</p>"+
+      "<ul><li>「ちりも積もれば」を自然に実践できる、コツコツした姿勢</li>"+
+      "<li>自分のペースを守って、息ながく続けられる安定感</li>"+
+      "<li>派手さに惑わされず、地に足をつけて判断できる冷静さ</li></ul>",
+    tsuyomi:
+      "<p>その堅実さは、リスク少なく始められる<b>ポイ活のお仕事</b>と相性ぴったりです。日常のすきま時間を使って、無理なくコツコツ積み上げていく。{NAME}さんの安定志向が、いちばん心地よく活きる働き方です。</p>"+
+      "<p>まずは身近なところから、小さな積み重ねを楽しんでいきましょう ♪</p>",
+    chui:
+      "<p>{NAME}さんはコツコツが得意なぶん、慣れた範囲にとどまりがちかもしれません。慣れてきたら、ほんの少しだけ<span class='marker'>新しいことにも挑戦</span>してみると、世界がぐっと広がります。</p>"+
+      "<p>{NAME}さんの堅実さがあれば、新しい一歩もきっと無理なく踏み出せますよ＾＾</p>",
+    msg:"小さな一歩を大切にできる{NAME}さんは、続ける力の持ち主です。その積み重ねは、いつか大きな自信になりますよ。あせらず、{NAME}さんのペースで進んでいきましょうね ♪"
+  }
+};
+
+/* ===== 状態 ===== */
+var state = {
+  profile:{ name:"", birthY:"", birthM:"", birthD:"", gender:"", job:"", side:[], sideOther:"" },
+  answers:new Array(13).fill(null),
+  current:0
+};
+var $ = function(id){ return document.getElementById(id); };
+
+/* 単一選択 */
+function buildSingle(containerId, items, key){
+  var c = $(containerId); c.innerHTML = "";
+  items.forEach(function(label){
+    var el = document.createElement("div");
+    el.className = "opt"; el.textContent = label;
+    el.onclick = function(){
+      Array.prototype.forEach.call(c.children, function(ch){ ch.classList.remove("sel"); });
+      el.classList.add("sel"); state.profile[key] = label; checkIntroReady();
+    };
+    c.appendChild(el);
+  });
+}
+
+/* 複数選択（副業） */
+function buildMulti(containerId, items, key){
+  var c = $(containerId); c.innerHTML = "";
+  items.forEach(function(label){
+    var el = document.createElement("div");
+    el.className = "opt";
+    el.innerHTML = '<span class="chk">✓</span><span>'+label+'</span>';
+    el.onclick = function(){
+      var none = "まだ副業はしていない";
+      if(label === none){
+        // 「していない」を選んだら他を解除
+        Array.prototype.forEach.call(c.children, function(ch){ ch.classList.remove("sel"); });
+        el.classList.add("sel"); state.profile[key] = [none];
+      } else {
+        // 他を選んだら「していない」を解除
+        var noneEl = Array.prototype.filter.call(c.children,function(ch){return ch.textContent.indexOf(none)>-1;})[0];
+        if(noneEl) noneEl.classList.remove("sel");
+        el.classList.toggle("sel");
+        var arr = []; 
+        Array.prototype.forEach.call(c.children, function(ch){ if(ch.classList.contains("sel")) arr.push(ch.textContent.replace(/^✓/,"")); });
+        state.profile[key] = arr;
+      }
+      // 「その他」が選ばれているかで自由記述欄を出し入れ
+      if(key === "side"){ toggleSideOther(); }
+      checkIntroReady();
+    };
+    c.appendChild(el);
+  });
+}
+
+/* 副業「その他」の自由記述欄の表示制御 */
+function toggleSideOther(){
+  var sel = state.profile.side || [];
+  var hasOther = sel.indexOf("その他") > -1;
+  var box = $("side-other");
+  if(hasOther){ box.style.display = "block"; }
+  else { box.style.display = "none"; box.value = ""; state.profile.sideOther = ""; }
+}
+
+function buildBirthSelectors(){
+  var y=$("birth-y"),m=$("birth-m"),d=$("birth-d");
+  y.innerHTML='<option value="">年</option>'; m.innerHTML='<option value="">月</option>'; d.innerHTML='<option value="">日</option>';
+  var now=new Date().getFullYear();
+  for(var yy=now-15; yy>=1950; yy--) y.innerHTML+='<option value="'+yy+'">'+yy+'年</option>';
+  for(var mm=1; mm<=12; mm++) m.innerHTML+='<option value="'+mm+'">'+mm+'月</option>';
+  for(var dd=1; dd<=31; dd++) d.innerHTML+='<option value="'+dd+'">'+dd+'日</option>';
+  y.onchange=function(){state.profile.birthY=y.value;checkIntroReady();};
+  m.onchange=function(){state.profile.birthM=m.value;checkIntroReady();};
+  d.onchange=function(){state.profile.birthD=d.value;checkIntroReady();};
+}
+
+function checkIntroReady(){
+  var p=state.profile;
+  var ready = p.name && p.birthY && p.birthM && p.birthD && p.gender && p.job && (p.side && p.side.length>0);
+  $("start-btn").disabled = !ready;
+  $("intro-hint").style.display = ready ? "none" : "block";
+}
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
+  $(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderQuestion(){
+  var i=state.current;
+  $("q-num").textContent="Q"+(i+1);
+  $("q-current").textContent=(i+1);
+  $("q-text").textContent=QUESTIONS[i];
+  $("cheer").textContent=CHEERS[i];
+  $("progress-fill").style.width=((i)/13*100)+"%";
+  // cheer再アニメ
+  var ch=$("cheer"); ch.style.animation="none"; void ch.offsetWidth; ch.style.animation="";
+
+  var box=$("answers"); box.innerHTML="";
+  ANSWER_OPTIONS.forEach(function(opt){
+    var b=document.createElement("button");
+    b.className="ans"+(state.answers[i]===opt.value?" sel":"");
+    b.innerHTML='<span class="dot"></span><span>'+opt.label+'</span>';
+    b.onclick=function(){
+      state.answers[i]=opt.value;
+      $("progress-fill").style.width=((i+1)/13*100)+"%";
+      Array.prototype.forEach.call(box.children,function(c){c.classList.remove("sel");});
+      b.classList.add("sel");
+      setTimeout(function(){
+        if(i<12){state.current++;renderQuestion();}
+        else{finishQuiz();}
+      },260);
+    };
+    box.appendChild(b);
+  });
+  $("q-back").style.visibility=(i===0)?"hidden":"visible";
+  var card=$("q-card"); card.style.animation="none"; void card.offsetWidth; card.style.animation="";
+}
+
+/* 採点 */
+function calcScores(){
+  var a={}; for(var k=0;k<13;k++)a[k+1]=state.answers[k];
+  var s={coaching:0,business:0,secretary:0,hanbai:0,poikatsu:0};
+  s.coaching+=a[1]+a[7]+a[12]; s.business+=a[5]+a[9]+a[13];
+  s.secretary+=a[3]+a[10]; s.hanbai+=a[2]+a[8]; s.poikatsu+=a[4];
+  s.hanbai+=a[6]*0.75; s.secretary+=(4-a[6])*0.75; s.poikatsu+=(4-a[11])*0.75;
+  var pct={};
+  for(var key in s){ pct[key]=(s[key]/MAXSCORE[key]*100)*BALANCE[key]; }
+  return {raw:s,pct:pct};
+}
+function judge(){
+  var pct=calcScores().pct;
+  var ranked=TYPES.slice().sort(function(x,y){
+    if(Math.abs(pct[y]-pct[x])>1e-9) return pct[y]-pct[x];
+    return TYPES.indexOf(x)-TYPES.indexOf(y);
+  });
+  var top=ranked[0],second=ranked[1];
+  var gap=pct[top]-pct[second];
+  return {ranked:ranked,top:top,second:second,gap:gap,multi:(gap<=10),pct:pct};
+}
+
+function finishQuiz(){
+  $("progress-fill").style.width="100%";
+  renderResult(judge());
+  showScreen("screen-result");
+}
+
+function nm(){ return state.profile.name || "あなた"; }
+function fill(str){ return str.replace(/\{NAME\}/g, nm()); }
+
+function renderResult(r){
+  var top=r.top, meta=TYPE_META[top], txt=RESULT_TEXT[top];
+  $("r-emoji").textContent=meta.emoji;
+  $("r-name-lead").textContent=nm()+"さんに特におすすめは…";
+  $("r-title").innerHTML='「<span class="type-name">'+meta.job+'のお仕事</span>」です！';
+  $("r-tag").textContent=meta.type;
+
+  var mb=$("multi-banner-area");
+  if(r.multi){
+    var m2=TYPE_META[r.second];
+    mb.innerHTML='<div class="multi-banner">❖ 実は'+nm()+'さん、<b>複数のお仕事に向いていそう</b>です！<br>'+
+      '今回いちばんは「'+meta.job+'のお仕事（'+meta.type+'）」ですが、<b>「'+m2.job+'のお仕事（'+m2.type+'）」</b>もとても近い素質があります。'+
+      'どちらも素敵な可能性。もし興味があれば、無料Zoom面談で一緒に見極めてみませんか？ ♪</div>';
+  } else { mb.innerHTML=""; }
+
+  $("r-detail").innerHTML=
+    block("❧","こんな人",fill(txt.konna))+
+    block("✧","魅力",fill(txt.miryoku))+
+    block("✦","強みの活かし方",fill(txt.tsuyomi))+
+    block("❀","気をつけたいこと",fill(txt.chui))+
+    '<div class="detail-block msg"><div class="dh">✉ '+nm()+'さんへのメッセージ</div><div class="dt"><p>'+fill(txt.msg)+'</p></div></div>';
+
+  var others=$("r-others"); others.innerHTML="";
+  r.ranked.forEach(function(key){
+    var mt=TYPE_META[key], t=RESULT_TEXT[key], isTop=(key===top), pv=Math.round(r.pct[key]);
+    others.innerHTML+=
+      '<div class="type-mini'+(isTop?' is-top':'')+'">'+
+        '<div class="emoji">'+mt.emoji+'</div>'+
+        '<div class="tm-body">'+
+          (isTop?'<span class="tm-flag">★ あなたのおすすめ</span><br>':'')+
+          '<div class="tm-name">'+mt.job+'のお仕事（'+mt.type+'）<span class="pct">'+pv+'%</span></div>'+
+          '<div class="tm-desc">'+t.short+'</div>'+
+        '</div></div>';
+  });
+  // シェア文言を更新
+  state._shareText="お仕事タイプ診断で「"+meta.job+"のお仕事（"+meta.type+"）」タイプでした！あなたも診断してみてね♪";
+}
+function block(emoji,head,body){
+  return '<div class="detail-block"><div class="dh">'+emoji+' '+head+'</div><div class="dt">'+body+'</div></div>';
+}
+
+/* シェア */
+function doShare(kind){
+  var url=CONFIG.shareUrl || location.href;
+  var text=state._shareText || "お仕事タイプ診断、やってみたよ♪";
+  if(kind==="x"){
+    window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(text)+"&url="+encodeURIComponent(url),"_blank");
+  } else if(kind==="line"){
+    window.open("https://social-plugins.line.me/lineit/share?url="+encodeURIComponent(url)+"&text="+encodeURIComponent(text),"_blank");
+  } else if(kind==="copy"){
+    var done=function(){ var t=$("copy-toast"); t.classList.add("show"); setTimeout(function(){t.classList.remove("show");},2000); };
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done,done); }
+    else { var ta=document.createElement("textarea"); ta.value=url; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); done(); }
+  }
+}
+
+/* 初期化 */
+function init(){
+  $("name-free").addEventListener("input",function(){ state.profile.name=this.value.trim(); checkIntroReady(); });
+  buildBirthSelectors();
+  buildSingle("opt-gender",INTRO_OPTS.gender,"gender");
+  buildSingle("opt-job",INTRO_OPTS.job,"job");
+  buildMulti("opt-side",INTRO_OPTS.side,"side");
+  $("side-other").addEventListener("input",function(){ state.profile.sideOther=this.value.trim(); checkIntroReady(); });
+  checkIntroReady();
+
+  $("start-btn").onclick=function(){ state.current=0; showScreen("screen-quiz"); renderQuestion(); };
+  $("q-back").onclick=function(){ if(state.current>0){state.current--;renderQuestion();} };
+
+  $("cta-intro").onclick=function(){
+    if(CONFIG.introUrl && CONFIG.introUrl!=="#"){ window.open(CONFIG.introUrl,"_blank"); }
+    else { alert("ここに事業紹介ページのURLを設定してください ♪\n（コード内 CONFIG.introUrl）"); }
+  };
+  $("cta-line").onclick=function(){ showScreen("screen-line"); };
+
+  $("line-back").onclick=function(){ showScreen("screen-result"); };
+  $("line-add").onclick=function(){
+    if(CONFIG.lineUrl && CONFIG.lineUrl!=="#"){ window.open(CONFIG.lineUrl,"_blank"); }
+    else { alert("ここに公式LINEの友だち追加URLを設定してください ♪\n（コード内 CONFIG.lineUrl）"); }
+  };
+
+  $("share-x").onclick=function(){doShare("x");};
+  $("share-line").onclick=function(){doShare("line");};
+  $("share-copy").onclick=function(){doShare("copy");};
+
+  $("restart-btn").onclick=function(){
+    state.answers=new Array(13).fill(null); state.current=0; showScreen("screen-intro");
+  };
+
+  // QR画像が設定されていれば差し込む
+  if(CONFIG.lineQrImg){ $("qr-frame").innerHTML='<img src="'+CONFIG.lineQrImg+'" alt="公式LINE QRコード">'; }
+}
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>
